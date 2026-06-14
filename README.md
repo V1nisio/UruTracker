@@ -4,7 +4,7 @@ Dashboard de prospecção para construtoras e consultores de engenharia que ajud
 
 ## Status
 
-Projeto em desenvolvimento. Extração básica de dados implementada. Paginação, persistência e visualização ainda serão implementadas.
+Projeto em desenvolvimento. Extração de dados via API concluída. Persistência em disco e visualização ainda serão implementadas.
 
 ## O que é
 
@@ -52,18 +52,23 @@ Um município é considerado relevante para monitoramento quando atende a pelo m
 
 ## Extração de dados
 
-A função `fetch_view` em `extrair_dados.py` realiza requisições à API com retry automático de até 3 tentativas. Limitação atual: retorna no máximo 1000 registros por chamada — paginação ainda a implementar.
+A função `fetch_view` em `extrair_dados.py` realiza o download completo de qualquer view com:
+
+- **Paginação automática** via `Content-Range`: baixa em lotes de 1000 registros até cobrir o total retornado pelo header, independente do volume de dados.
+- **Retry automático**: função interna `get(p)` tenta até `max_retries` vezes com intervalo de 2 segundos entre tentativas, propagando o erro apenas na última.
+- **Rate limiting passivo**: pausa de 100ms entre lotes para não sobrecarregar o servidor.
 
 ## Estrutura atual do projeto
 
 ```text
 UruTracker/
 └── data_extraction/
-    └── extrair_dados.py    ← constantes, mapeamento dos endpoints e extração básica (Partes 1 e 2 em andamento)
+    └── extrair_dados.py    ← constantes, mapeamento dos endpoints e extração completa (Partes 1 e 2 concluídas)
 ```
 
 ## Próximos passos
 
-- [x] Mapear endpoints e colunas necessárias (Parte 1 — Vinicius - Código / Theo - Pesquisa endpoint)
-- [ ] Adicionar paginação à extração para cobrir views com mais de 1000 registros (Parte 2 — Theo)
+- [x] Mapear endpoints e colunas necessárias (Parte 1 — Vinicius)
+- [x] Implementar extração via API com paginação e retry (Parte 2 — Theo)
 - [ ] Implementar persistência em CSV e orquestração dos downloads (Parte 3 — Belarmino)
+- [ ] Construir dashboard Streamlit com filtros e ranking de urgência
