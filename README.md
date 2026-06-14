@@ -4,7 +4,7 @@ Dashboard de prospecção para construtoras e consultores de engenharia que ajud
 
 ## Status
 
-Projeto em desenvolvimento. A etapa de mapeamento das fontes de dados foi concluída. As fases de extração, tratamento e visualização ainda serão implementadas.
+Projeto em desenvolvimento. Extração básica de dados implementada. Paginação, persistência e visualização ainda serão implementadas.
 
 ## O que é
 
@@ -50,15 +50,20 @@ Um município é considerado relevante para monitoramento quando atende a pelo m
 
 > **Importante:** o campo `situacao_plano_acao` representa apenas o fluxo administrativo da transferência (ex.: CIENTE ou IMPEDIDO) e não deve ser utilizado para avaliar o andamento físico da obra.
 
+## Extração de dados
+
+A função `fetch_view` em `extrair_dados.py` realiza requisições à API com retry automático de até 3 tentativas. Limitação atual: retorna no máximo 1000 registros por chamada — paginação ainda a implementar.
+
 ## Estrutura atual do projeto
 
 ```text
 UruTracker/
 └── data_extraction/
-    └── extrair_dados.py    ← constantes e mapeamento dos endpoints (Parte 1 concluída)
+    └── extrair_dados.py    ← constantes, mapeamento dos endpoints e extração básica (Partes 1 e 2 em andamento)
 ```
 
 ## Próximos passos
 
-- [ ] Implementar a extração dos dados via API com paginação e mecanismo de retry (Parte 2 — Theo)
+- [x] Mapear endpoints e colunas necessárias (Parte 1 — Vinicius - Código / Theo - Pesquisa endpoint)
+- [ ] Adicionar paginação à extração para cobrir views com mais de 1000 registros (Parte 2 — Theo)
 - [ ] Implementar persistência em CSV e orquestração dos downloads (Parte 3 — Belarmino)
