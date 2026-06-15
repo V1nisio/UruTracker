@@ -59,17 +59,29 @@ Carrega os 4 CSVs, converte datas, calcula `valor_total`, agrega setores por exe
 
 Aplica o criterio de "parado" (cond_A | cond_C), classifica urgencia e calcula KPIs.
 
- Condicao | Logica 
+| Condicao | Logica |
+|----------|--------|
 | A | `situacao_plano_trabalho == APROVADO` |
 | C | `data_fim < HOJE + 90 dias` AND status != CONCLUIDO |
 
- Urgencia | Criterio 
- `PRAZO_CRITICO` | prazo vencendo em menos de 90 dias 
- `APROVADO_PENDENTE` | demais casos 
+| Urgencia | Criterio |
+|----------|----------|
+| `PRAZO_CRITICO` | prazo vencendo em menos de 90 dias |
+| `APROVADO_PENDENTE` | demais casos |
+
+### Parte 3 - Analises e Visualizacoes (Belarmino)
+
+Agrega por UF e setor, gera graficos com matplotlib e consolida a tabela de leads ranqueada por urgencia.
+
+| Visualizacao | Tipo |
+| Emendas paradas por UF | Barras |
+| Top 15 setores | Barras horizontais |
+| Distribuicao por urgencia | Barras + pizza |
+| Tabela de leads | DataFrame por `urgencia` e `dias_para_prazo` |
 
 ## Proximos passos
 
 - [x] Extracao e persistencia de dados
 - [x] Notebook - Parte 1: carga e integracao
 - [x] Notebook - Parte 2: classificacao e KPIs
-- [ ] Notebook - Parte 3: analises e visualizacoes
+- [x] Notebook - Parte 3: analises e visualizacoes
