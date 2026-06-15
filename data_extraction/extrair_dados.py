@@ -1,4 +1,3 @@
-import csv
 import time
 import requests
 import pandas as pd
@@ -64,34 +63,32 @@ def fetch_view(view: str, select: str, filtro: dict | None = None, batch_size: i
 
 # --- Parte 3: Belarmino ---
 
-def salvar_csv(dados, nome):
+def salvar_csv(df: pd.DataFrame, nome: str) -> None:
     caminho = OUT_DIR / f"{nome}.csv"
-    if not dados:
-        print(f"  Aviso: sem dados para {nome}")
-        return
-    with open(caminho, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=dados[0].keys())
-        writer.writeheader()
-        writer.writerows(dados)
-    print(f"Salvo: {nome}.csv ({len(dados)} linhas)")
+    df.to_csv(caminho, index=False, encoding="utf-8-sig")
+    print(f"  -> {caminho.name} ({len(df)} linhas)")
 
 
 def main():
-    print(f"Baixando plano_acao_especial...")
-    plano_acao = fetch_view("plano_acao_especial", VIEWS["plano_acao_especial"], filtro={"ano_plano_acao": f"gte.{ANO_MINIMO}"})
-    salvar_csv(plano_acao.to_dict("records"), "plano_acao_especial")
+    print(f"Baixando plano_acao_especial (ano_plano_acao >= {ANO_MINIMO})...")
+    plano_acao = fetch_view(
+        "plano_acao_especial",
+        VIEWS["plano_acao_especial"],
+        filtro={"ano_plano_acao": f"gte.{ANO_MINIMO}"},
+    )
+    salvar_csv(plano_acao, "plano_acao_especial")
 
-    print("Baixando plano_trabalho_especial...")
+    print("Baixando plano_trabalho_especial (completo - view nao tem campo de ano)...")
     plano_trabalho = fetch_view("plano_trabalho_especial", VIEWS["plano_trabalho_especial"])
-    salvar_csv(plano_trabalho.to_dict("records"), "plano_trabalho_especial")
+    salvar_csv(plano_trabalho, "plano_trabalho_especial")
 
-    print("Baixando executor_especial...")
+    print("Baixando executor_especial (completo - view nao tem campo de ano)...")
     executor = fetch_view("executor_especial", VIEWS["executor_especial"])
-    salvar_csv(executor.to_dict("records"), "executor_especial")
+    salvar_csv(executor, "executor_especial")
 
-    print("Baixando finalidade_especial...")
+    print("Baixando finalidade_especial (completo - view nao tem campo de ano)...")
     finalidade = fetch_view("finalidade_especial", VIEWS["finalidade_especial"])
-    salvar_csv(finalidade.to_dict("records"), "finalidade_especial")
+    salvar_csv(finalidade, "finalidade_especial")
 
     print("\nConcluido.")
 
