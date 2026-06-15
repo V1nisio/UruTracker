@@ -55,9 +55,21 @@ python data_extraction/extrair_dados.py
 
 Carrega os 4 CSVs, converte datas, calcula `valor_total`, agrega setores por executor e integra as 4 tabelas via `id_plano_acao`.
 
+### Parte 2 - Classificacao e KPIs (Theo)
+
+Aplica o criterio de "parado" (cond_A | cond_C), classifica urgencia e calcula KPIs.
+
+ Condicao | Logica 
+| A | `situacao_plano_trabalho == APROVADO` |
+| C | `data_fim < HOJE + 90 dias` AND status != CONCLUIDO |
+
+ Urgencia | Criterio 
+ `PRAZO_CRITICO` | prazo vencendo em menos de 90 dias 
+ `APROVADO_PENDENTE` | demais casos 
+
 ## Proximos passos
 
 - [x] Extracao e persistencia de dados
 - [x] Notebook - Parte 1: carga e integracao
-- [ ] Notebook - Parte 2: classificacao e KPIs
+- [x] Notebook - Parte 2: classificacao e KPIs
 - [ ] Notebook - Parte 3: analises e visualizacoes
