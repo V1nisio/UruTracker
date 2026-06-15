@@ -4,7 +4,7 @@ Dashboard de prospecção para construtoras e consultores de engenharia que ajud
 
 ## Status
 
-Projeto em desenvolvimento. Extração de dados via API concluída. Persistência em disco e visualização ainda serão implementadas.
+Projeto em desenvolvimento. Extração de dados via API, persistência em CSV e orquestração dos downloads concluídas. Visualização (dashboard) ainda será implementada.
 
 ## O que é
 
@@ -58,17 +58,31 @@ A função `fetch_view` em `extrair_dados.py` realiza o download completo de qua
 - **Retry automático**: função interna `get(p)` tenta até `max_retries` vezes com intervalo de 2 segundos entre tentativas, propagando o erro apenas na última.
 - **Rate limiting passivo**: pausa de 100ms entre lotes para não sobrecarregar o servidor.
 
+## Persistência em CSV
+
+A função `salvar_csv` grava cada DataFrame em `data_extraction/<nome>.csv` usando encoding "utf-8-sig".
+
+A função `main` orquestra os downloads na seguinte ordem:
+
+1. `plano_acao_especial` — com filtro `ano_plano_acao >= 2024`
+2. `plano_trabalho_especial` — completo (sem campo de ano)
+3. `executor_especial` — completo
+4. `finalidade_especial` — completo
+
+Para executar:
+
+```bash
+python data_extraction/extrair_dados.py
+```
+
 ## Estrutura atual do projeto
 
 ```text
 UruTracker/
 └── data_extraction/
-    └── extrair_dados.py    ← constantes, mapeamento dos endpoints e extração completa (Partes 1 e 2 concluídas)
+    └── extrair_dados.py    ← constantes, endpoints, extração, persistência e orquestração (Partes 1, 2 e 3 concluídas)
 ```
 
 ## Próximos passos
 
-- [x] Mapear endpoints e colunas necessárias (Parte 1 — Vinicius)
-- [x] Implementar extração via API com paginação e retry (Parte 2 — Theo)
-- [ ] Implementar persistência em CSV e orquestração dos downloads (Parte 3 — Belarmino)
-- [ ] Construir dashboard Streamlit com filtros e ranking de urgência
+- [ ] Construir filtragem de dados coletados em pandas com visualização basica usando matplotlib
