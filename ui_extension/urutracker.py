@@ -735,6 +735,21 @@ class _EmptyArgs:
 # ===========================================================================
 
 _CSS = r"""
+/* splash overlay */
+#splash {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(6,18,31,.85);
+  backdrop-filter: blur(10px);
+  transition: opacity .6s ease;
+}
+#splash.out { opacity: 0; pointer-events: none; }
+#splash img {
+  width: 180px; filter: invert(1);
+  transition: transform .6s ease;
+}
+#splash.out img { transform: translate(-44vw, -44vh) scale(.4); }
+
 /* ============================================================
    UruTracker - Design System
    Institucional + tecnologico. Azul escuro + ciano.
@@ -2612,6 +2627,12 @@ const CardsUI = (() => {
     await refresh();
   }
 
+  const _splash = document.getElementById('splash');
+  setTimeout(() => {
+    _splash.classList.add('out');
+    _splash.addEventListener('transitionend', () => _splash.remove(), { once: true });
+  }, 2500);
+
   if (document.readyState === 'loading')
     document.addEventListener('DOMContentLoaded', boot);
   else boot();
@@ -2628,6 +2649,13 @@ _HTML = r"""<!DOCTYPE html>
 <style>__CSS__</style>
 </head>
 <body>
+
+<div id="splash">
+  <img src="__LOGO__" alt="">
+  <div class="brand-text" style="margin-left:16px">
+    <h1>URU<span class="accent">TRACKER</span></h1>
+  </div>
+</div>
 
 <header class="app-header">
   <canvas id="radar-canvas" class="radar-bg" aria-hidden="true"></canvas>
