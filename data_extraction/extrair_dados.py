@@ -6,7 +6,9 @@ from pathlib import Path
 # --- Parte 1: Vinicius ---
 
 BASE_URL = "https://api.transferegov.dth.api.gov.br/transferenciasespeciais"
-OUT_DIR = Path(__file__).parent
+OUT_DIR = Path(__file__).parent.parent / "data"
+OUT_DIR.mkdir(parents=True, exist_ok=True)
+
 ANO_MINIMO = 2024
 
 VIEWS = {
@@ -63,9 +65,10 @@ def fetch_view(view: str, select: str, filtro: dict | None = None, batch_size: i
 
 # --- Parte 3: Belarmino ---
 
-def salvar_csv(df: pd.DataFrame, nome: str) -> None:
-    caminho = OUT_DIR / f"{nome}.csv"
-    df.to_csv(caminho, index=False, encoding="utf-8-sig")
+def salvar_parquet(df: pd.DataFrame, nome: str) -> None:
+    caminho = OUT_DIR / f"{nome}.parquet"
+    #
+    df.to_parquet(caminho, engine='pyarrow', compression='gzip')
     print(f"  -> {caminho.name} ({len(df)} linhas)")
 
 
@@ -76,22 +79,21 @@ def main():
         VIEWS["plano_acao_especial"],
         filtro={"ano_plano_acao": f"gte.{ANO_MINIMO}"},
     )
-    salvar_csv(plano_acao, "plano_acao_especial")
+    salvar_parquet(plano_acao, "plano_acao") 
 
     print("Baixando plano_trabalho_especial (completo - view nao tem campo de ano)...")
     plano_trabalho = fetch_view("plano_trabalho_especial", VIEWS["plano_trabalho_especial"])
-    salvar_csv(plano_trabalho, "plano_trabalho_especial")
+    salvar_parquet(plano_trabalho, "plano_trabalho")
 
     print("Baixando executor_especial (completo - view nao tem campo de ano)...")
     executor = fetch_view("executor_especial", VIEWS["executor_especial"])
-    salvar_csv(executor, "executor_especial")
+    salvar_parquet(executor, "executor")
 
     print("Baixando finalidade_especial (completo - view nao tem campo de ano)...")
     finalidade = fetch_view("finalidade_especial", VIEWS["finalidade_especial"])
-    salvar_csv(finalidade, "finalidade_especial")
+    salvar_parquet(finalidade, "finalidade")
 
     print("\nConcluido.")
-
 
 if __name__ == "__main__":
     main()

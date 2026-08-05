@@ -1,21 +1,3 @@
-"""
-urutracker.py — UruTracker (Radar de Emenda Pix Parada), aplicativo unico.
-
-TUDO vive neste unico arquivo: servidor Flask + HTML + CSS + JS. Ao rodar:
-
-    python ui_extension/urutracker.py
-
-ele sobe um servidor local, abre o navegador padrao e exibe o dashboard.
-
-Os dados NAO sao embutidos: vem dos CSVs gerados por
-    python data_extraction/extrair_dados.py
-Sem esses CSVs o app sobe e mostra a tela de "dados ausentes" (nao funciona
-sem os arquivos de data_extraction/).
-
-Os dois assets de terceiros (Chart.js e o GeoJSON do Brasil) sao buscados em
-tempo de execucao via CDN e servidos pela rota /vendor/<...> — por isso nenhum
-arquivo binario precisa existir ao lado deste .py. Requer internet na 1a carga.
-"""
 from __future__ import annotations
 
 import importlib
@@ -28,9 +10,6 @@ import webbrowser
 from datetime import date
 from pathlib import Path
 
-# ---------------------------------------------------------------------------
-# Bootstrap de dependencias (instala automaticamente se faltarem)
-# ---------------------------------------------------------------------------
 
 REQUISITOS = {
     "flask": "Flask>=3.0",
@@ -57,35 +36,27 @@ def _garantir_dependencias() -> None:
 
 _garantir_dependencias()
 
-import numpy as np  # noqa: E402
-import pandas as pd  # noqa: E402
-from flask import Flask, jsonify, request  # noqa: E402
+import numpy as np  
+import pandas as pd  
+from flask import Flask, jsonify, request 
 
-# ===========================================================================
-# DATA LOADER  (carga e processamento dos CSVs de data_extraction/)
-# ===========================================================================
+DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
-# ui_extension/  ->  raiz do projeto  ->  data_extraction/
-DATA_DIR = Path(__file__).resolve().parent.parent / "data_extraction"
-
-# Logomarca hospedada (PNG transparente). Fica online para nao precisar
-# versionar nenhum arquivo de imagem junto do .py.
 LOGO_URL = "https://logusautomacao.com/wp-content/uploads/2026/06/logopng.png"
 
 ARQUIVOS = {
-    "plano_acao": "plano_acao_especial.csv",
-    "plano_trabalho": "plano_trabalho_especial.csv",
-    "executor": "executor_especial.csv",
-    "finalidade": "finalidade_especial.csv",
+    "plano_acao": "plano_acao.parquet",
+    "plano_trabalho": "plano_trabalho.parquet",
+    "executor": "executor.parquet",
+    "finalidade": "finalidade.parquet",
 }
 
-# Situacoes que indicam obra concluida (nao entram no radar)
 CONCLUIDOS = {"CONCLUIDO", "CONCLUIDO_NT_TCU", "CONCLUIDO_PRESTACAO_CONTAS"}
 
-# Janela (em dias) para considerar o prazo "critico"
+
 JANELA_PRAZO_DIAS = 90
 
-# Sigla da UF -> codigo IBGE de 2 digitos (nomes dos GeoJSON municipais tbrugz)
+
 UF_COD = {
     "RO": "11", "AC": "12", "AM": "13", "RR": "14", "PA": "15", "AP": "16", "TO": "17",
     "MA": "21", "PI": "22", "CE": "23", "RN": "24", "PB": "25", "PE": "26",
@@ -95,30 +66,23 @@ UF_COD = {
     "MS": "50", "MT": "51", "GO": "52", "DF": "53",
 }
 
-# _MUNI_IBGE (mapeamento "NOME|UF" -> (codigo_ibge, nome_exibicao)) fica
-# definido no rodape deste arquivo, logo antes do bloco __main__.
 
-# Faixas de classificacao por prazo (data_fim relativa a hoje), na ordem da
-# tabela. O rank define a ordenacao padrao da tabela de leads.
 URGENCIA_ORDEM = ["ANDAMENTO", "POSSIVEL", "CRITICO", "OPORTUNIDADE",
                   "ESTAGNADO", "ABANDONADO"]
 URGENCIA_RANK = {k: i for i, k in enumerate(URGENCIA_ORDEM)}
 
-# "Mostrar oportunidades primeiro": ordem de prospeccao (padrao da tabela).
+
 OPORT_RANK = {k: i for i, k in enumerate(
     ["OPORTUNIDADE", "ESTAGNADO", "CRITICO", "POSSIVEL", "ANDAMENTO", "ABANDONADO"]
 )}
 
-# Faixas "verdes" (acionaveis): oportunidade + recem estagnada.
+
 GRUPO_OPORTUNIDADE = ["OPORTUNIDADE", "ESTAGNADO"]
 
-# Faixas exibidas nos cards do municipio, na ordem pedida.
+
 CARDS_ORDEM = ["OPORTUNIDADE", "ESTAGNADO", "CRITICO", "ABANDONADO"]
 CARDS_RANK = {k: i for i, k in enumerate(CARDS_ORDEM)}
 
-# Familia tematica do tipo de obra (area_politica_publica_pt) -> icone no card.
-# Os 79 tipos da base sao agrupados em 16 familias por palavra-chave (ordem
-# importa: regra mais especifica primeiro). O frontend mapeia familia -> SVG.
 FAMILIA_RULES = [
     ("saude", ["saude", "hospitalar", "ambulatorial", "atencao basica", "vigilancia sanitaria",
                "vigilancia epidemiolog", "epidemiolog", "profilatico", "terapeutico",
@@ -153,14 +117,14 @@ def _norm_txt(s: str) -> str:
 
 
 def familia_obra(setor_nome: str) -> str:
-    """Classifica um tipo de obra numa das 16 familias tematicas (ou 'generic')."""
+    
     n = _norm_txt(setor_nome)
     for fam, kws in FAMILIA_RULES:
         if any(k in n for k in kws):
             return fam
     return "generic"
 
-# Colunas expostas na tabela de leads (na ordem de exibicao)
+
 COLUNAS_LEAD = [
     "id_plano_acao",
     "urgencia",
@@ -173,7 +137,7 @@ COLUNAS_LEAD = [
     "dias_para_prazo",
 ]
 
-# Whitelist de ordenacao aceita pela API (protege contra valores arbitrarios)
+
 SORT_WHITELIST = {
     "urgencia": ("rank", True),
     "prazo": ("dias_para_prazo", True),
@@ -184,7 +148,6 @@ SORT_WHITELIST = {
 
 
 class DataStore:
-    """Mantem o DataFrame processado e os metadados da carga."""
 
     def __init__(self) -> None:
         self.df: pd.DataFrame | None = None
@@ -214,7 +177,6 @@ STORE = DataStore()
 
 
 def _to_bool(serie: pd.Series) -> pd.Series:
-    """Normaliza colunas booleanas que podem vir como bool/str/NaN."""
     if serie.dtype == bool:
         return serie.fillna(False)
     return (
@@ -227,11 +189,6 @@ def _to_bool(serie: pd.Series) -> pd.Series:
 
 
 def build_dataframe() -> None:
-    """Le os CSVs, integra as tabelas e classifica as emendas paradas.
-
-    Atualiza o ``STORE`` global. Nunca levanta excecao para o servidor:
-    em caso de erro, marca ``data_ok=False`` e guarda a mensagem.
-    """
     STORE.df = None
     STORE.data_ok = False
     STORE.erro = None
@@ -244,20 +201,19 @@ def build_dataframe() -> None:
     if faltando:
         STORE.faltando = faltando
         STORE.erro = (
-            "CSVs nao encontrados em data_extraction/. "
+            "parquet nao encontrados em data/ "
             "Rode primeiro: python data_extraction/extrair_dados.py"
         )
         return
 
     try:
-        plano_acao = pd.read_csv(DATA_DIR / ARQUIVOS["plano_acao"], encoding="utf-8-sig")
-        plano_trabalho = pd.read_csv(DATA_DIR / ARQUIVOS["plano_trabalho"], encoding="utf-8-sig")
-        executor = pd.read_csv(DATA_DIR / ARQUIVOS["executor"], encoding="utf-8-sig")
-        finalidade = pd.read_csv(DATA_DIR / ARQUIVOS["finalidade"], encoding="utf-8-sig")
+        plano_acao = pd.read_parquet(DATA_DIR / ARQUIVOS["plano_acao"])
+        plano_trabalho = pd.read_parquet(DATA_DIR / ARQUIVOS["plano_trabalho"])
+        executor = pd.read_parquet(DATA_DIR / ARQUIVOS["executor"])
+        finalidade = pd.read_parquet(DATA_DIR / ARQUIVOS["finalidade"])
 
         hoje = pd.Timestamp(date.today())
 
-        # -- datas e valores ------------------------------------------------
         plano_trabalho["data_fim_execucao_plano_trabalho"] = pd.to_datetime(
             plano_trabalho["data_fim_execucao_plano_trabalho"], errors="coerce"
         )
@@ -270,7 +226,6 @@ def build_dataframe() -> None:
             + plano_acao["valor_investimento_plano_acao"].fillna(0)
         )
 
-        # -- setor (agrega area_politica_publica por executor) --------------
         finalidade_lst = (
             finalidade.groupby("id_executor")["area_politica_publica_pt"]
             .apply(lambda x: sorted(x.dropna().unique()))
