@@ -19,6 +19,8 @@ REQUISITOS = {
 
 
 def _garantir_dependencias() -> None:
+    if os.environ.get("VERCEL"):
+        return
     faltando = []
     for modulo, pacote in REQUISITOS.items():
         try:
@@ -2984,8 +2986,6 @@ def _abrir_navegador() -> None:
 
 
 def main() -> None:
-    print("[uru] Carregando dados de data_extraction/ ...")
-    build_dataframe()
     if STORE.data_ok:
         n = len(STORE.df)
         print(f"[uru] OK - {n:,} emendas paradas carregadas.".replace(",", "."))
@@ -12954,6 +12954,8 @@ _MUNI_CENTROIDE = {
     "5222203": [-47.093, -14.9704],
 }
 
+
+build_dataframe()
 
 if __name__ == "__main__":
     main()
