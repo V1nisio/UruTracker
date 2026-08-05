@@ -320,7 +320,7 @@ def build_dataframe() -> None:
     except Exception as exc:  # pragma: no cover - defensivo
         STORE.df = None
         STORE.data_ok = False
-        STORE.erro = f"Falha ao processar os CSVs: {exc}"
+        STORE.erro = f"Falha ao processar os arquivos parquet: {exc}"
 
 
 def aplicar_filtros(args) -> pd.DataFrame:
@@ -2494,7 +2494,7 @@ const CardsUI = (() => {
     const scr = document.getElementById('error-screen');
     scr.hidden = false;
     document.getElementById('error-msg').textContent =
-      meta.erro || 'Os CSVs ainda nao foram gerados.';
+      meta.erro || 'Os parquet ainda nao foram gerados.';
     if (meta.comando_extracao)
       document.getElementById('error-cmd').textContent = meta.comando_extracao;
   }
@@ -2645,7 +2645,7 @@ _HTML = r"""<!DOCTYPE html>
   <div class="error-box">
     <div class="error-tag mono">DADOS AUSENTES</div>
     <h2>Nenhum dado carregado</h2>
-    <p id="error-msg">Os CSVs ainda nao foram gerados.</p>
+    <p id="error-msg">Os parquets ainda nao foram gerados.</p>
     <p class="error-hint">Rode o extrator na raiz do projeto e recarregue:</p>
     <code class="error-cmd mono" id="error-cmd">python data_extraction/extrair_dados.py</code>
     <button id="btn-retry" class="btn">RECARREGAR DADOS</button>
