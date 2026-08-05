@@ -6,7 +6,6 @@ venv
 *venv
 *.venv
 *.csv
-*.parquet
 .DS_Store
 Thumbs.db
 .vercel/
